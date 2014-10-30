@@ -11,7 +11,7 @@ parameters:
     description: Image name
   floating-network-id:
     type: string
-    description: UUID of the external network. The private network created by this stack will route to this network. Also, any floating ip's needed by this stack will come this network. 
+    description: UUID of the external network. The private network created by this stack will route to this network. Also any floating ip's needed by this stack will come this network. 
   minion-count-elk:
     type: number
     default: 1
@@ -24,7 +24,7 @@ parameters:
     description: Flavor (image size) of elk servers to be created.
 
 resources:
-    
+
   # Random string to aid in naming things.
   stack-string:
     type: OS::Heat::RandomString
@@ -110,7 +110,7 @@ resources:
 
         # Install git
         apt-get install -y git
-            
+
         # Install salt master
         echo "Install Salt Master"
         curl -L http://bootstrap.saltstack.org | sh -s -- -M -N

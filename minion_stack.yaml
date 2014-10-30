@@ -1,4 +1,4 @@
-heat_template_version: 2013-10-30
+heat_template_version: 2013-05-23
 
 description: Child stack for salt minions.
 
