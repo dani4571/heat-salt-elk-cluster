@@ -73,9 +73,9 @@ resources:
     type: OS::Neutron::FloatingIPAssociation
     properties: 
       floatingip_id:
-        get_resource: minion-elk-ip
+        get_resource: minion-ip
       port_id:
-        get_resource: minion-elk-port
+        get_resource: minion-port
 
   minion:
     type: OS::Nova::Server
