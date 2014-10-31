@@ -31,9 +31,6 @@ parameters:
   minion-roles:
     type: string
     description: List of roles for the minion
-  floating-network-id:
-    type: string
-    description: UUID of the external network. The private network created by this stack will route to this network. Also any floating ip's needed by this stack will come this network. 
 
 resources:
 
@@ -55,27 +52,6 @@ resources:
         get_param: minion-config
       server:
         get_resource: minion 
-
-  minion-ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network_id: 
-        get_param: floating-network-id
-
-  minion-port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: 
-        get_resource: net
-
-
-  minion-floating-ip-ass: 
-    type: OS::Neutron::FloatingIPAssociation
-    properties: 
-      floatingip_id:
-        get_resource: minion-ip
-      port_id:
-        get_resource: minion-port
 
   minion:
     type: OS::Nova::Server
@@ -109,8 +85,8 @@ resources:
                 get_param: minion-roles
 
       networks:
-        - port:
-            get_resource: minion-port
+        - network: 
+            get_param: network
 
       user_data_format: SOFTWARE_CONFIG
 
