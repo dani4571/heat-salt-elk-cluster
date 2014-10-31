@@ -11,7 +11,7 @@ parameters:
     description: Image name
   floating-network-id:
     type: string
-    description: UUID of the external network. The private network created by this stack will route to this network. Also, any floating ip's needed by this stack will come this network. 
+    description: UUID of the external network. The private network created by this stack will route to this network. Also any floating ip's needed by this stack will come this network. 
   minion-count-elk:
     type: number
     default: 1
@@ -24,7 +24,7 @@ parameters:
     description: Flavor (image size) of elk servers to be created.
 
 resources:
-    
+
   # Random string to aid in naming things.
   stack-string:
     type: OS::Heat::RandomString
@@ -110,7 +110,7 @@ resources:
 
         # Install git
         apt-get install -y git
-            
+
         # Install salt master
         echo "Install Salt Master"
         curl -L http://bootstrap.saltstack.org | sh -s -- -M -N
@@ -179,7 +179,7 @@ resources:
             - coms
             - public_key
         state_repos: |
-          https://github.com/eglute/elasticsearch-logstash-kibana-formula.git
+          https://github.com/dani4571/elasticsearch-logstash-kibana-formula.git
       config:
         get_resource: config-salt-master
       server:
@@ -212,7 +212,7 @@ resources:
           base:
             'roles:elk':
               - match: grain
-              - kibana
+              - elasticsearch-logstash-kibana-formula.elk
 
         /srv/pillar/top.sls: |
           base:
@@ -247,7 +247,7 @@ resources:
         get_resource: master-ip
       port_id:
         get_resource: master-port
-  
+
   minion-group-elk:
     type: OS::Heat::ResourceGroup
     depends_on: deploy-salt-master
@@ -299,7 +299,7 @@ resources:
       network_id: 
         get_resource: net
 
-  
+
   minion-elk-floating-ip-ass: 
     type: OS::Neutron::FloatingIPAssociation
     properties: 
@@ -328,7 +328,7 @@ resources:
     depends_on:
       - deploy-salt-master
       - minion-group-elk
-      
+
 
 outputs:
   master-ip:
