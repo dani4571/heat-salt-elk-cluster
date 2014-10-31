@@ -213,6 +213,9 @@ resources:
             'roles:elk':
               - match: grain
               - elasticsearch-logstash-kibana-formula.elk
+            'roles:haproxy':
+              - match: grain
+              - elasticsearch-logstash-kibana-formula.elk.haproxy
 
         /srv/pillar/top.sls: |
           base:
@@ -287,26 +290,85 @@ resources:
             get_resource: config-salt-minion
           minion-roles: "elk"
 
-  minion-elk-ip:
+
+    # Floating ip for haproxy node
+  minion-haproxy-ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network_id: 
         get_param: floating-network-id
 
-  minion-elk-port:
+  # Port for haproxy node
+  minion-haproxy-port:
     type: OS::Neutron::Port
     properties:
       network_id: 
         get_resource: net
 
+  # haproxy minion
+  minion-haproxy:
+    type: OS::Nova::Server
+    depends_on: interface
+    properties:
+      flavor:
+        get_param: minion-flavor-elk
+      image:
+        get_param: image
+      name:
+        str_replace:
+          template: elk-$stackstr-haproxy
+          params:
+            $stackstr:
+              get_attr:
+                - stack-string
+                - value
+      personality:
 
-  minion-elk-floating-ip-ass: 
+        # Private key for node to node communication
+        /root/.ssh/coms_rsa:
+          get_attr:
+            - coms
+            - private_key
+
+        # Set the salt role to haproxy
+        /etc/salt/grains: |
+          roles:
+            - haproxy
+
+      networks:
+        - port:
+            get_resource: minion-haproxy-port
+
+      # Needs to be SOFTWARE_CONFIG when using SoftwareConfigs
+      user_data_format: SOFTWARE_CONFIG
+
+  # Associate haproxy floating ip to the port
+  minion-haproxy-floating-ip-ass: 
     type: OS::Neutron::FloatingIPAssociation
     properties: 
       floatingip_id:
-        get_resource: minion-elk-ip
+        get_resource: minion-haproxy-ip
       port_id:
-        get_resource: minion-elk-port
+        get_resource: minion-haproxy-port
+
+  # Deploys the salt-minion software config to the haproxy node.
+  deploy-haproxy:
+    type: OS::Heat::SoftwareDeployment
+    depends_on: deploy-salt-master
+    properties:
+      input_values:
+        public_key:
+          get_attr:
+            - coms
+            - public_key
+        master:
+          get_attr:
+            - master
+            - first_address
+      config:
+        get_resource: config-salt-minion
+      server:
+        get_resource: minion-haproxy
 
   config-deploy:
     type: OS::Heat::SoftwareConfig
