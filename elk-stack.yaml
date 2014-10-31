@@ -235,8 +235,9 @@ resources:
           mine_interval: 1
 
         /srv/pillar/elk.sls: |
-          kibana:
-            bind_host: {{ salt['grains.get']('ip_interfaces:eth0')[0] }}
+          elastic:
+            htpasswd: |
+              admin:{SHA}7NgHJXwOnmZFTS+pVVCfARar+ks=
 
       networks:
         - port:
