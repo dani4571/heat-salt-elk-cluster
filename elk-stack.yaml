@@ -17,7 +17,7 @@ parameters:
     default: 1
     label: Number of Elasticsearch nodes
     description: How many nodes will be required.
-  minion-flavor-elk:
+  flavor:
     type: string
     default: m1.small
     label: Flavor of elk servers
@@ -179,7 +179,7 @@ resources:
             - coms
             - public_key
         state_repos: |
-          https://github.com/eglute/elasticsearch-logstash-kibana-formula.git
+          https://github.com/dani4571/elasticsearch-logstash-kibana-formula.git
       config:
         get_resource: config-salt-master
       server:
@@ -193,7 +193,8 @@ resources:
         get_param: keyname
       image: 
         get_param: image
-      flavor: m1.small
+      flavor: 
+        get_param: flavor
       name:
         str_replace:
           template: elk-$stackstr-master
@@ -212,7 +213,7 @@ resources:
           base:
             'roles:elk':
               - match: grain
-              - kibana
+              - elasticsearch-logstash-kibana-formula.elk
 
         /srv/pillar/top.sls: |
           base:
@@ -233,7 +234,7 @@ resources:
 
         /srv/pillar/elk.sls: |
           kibana:
-            bind_host: {{ salt['grains.get']('ip_interfaces:eth0')[0] }}
+            bind_host: {{ salt['grains.get']('ip_interfaces.eth0')[0] }}
 
       networks:
         - port:
@@ -247,7 +248,7 @@ resources:
         get_resource: master-ip
       port_id:
         get_resource: master-port
-  
+
   minion-group-elk:
     type: OS::Heat::ResourceGroup
     depends_on: deploy-salt-master
@@ -258,7 +259,7 @@ resources:
         type: Salt::Minion
         properties:
           flavor: 
-            get_param: minion-flavor-elk
+            get_param: flavor
           stack-prefix:
             str_replace:
               template: elk-$stackstr-server
@@ -286,27 +287,9 @@ resources:
           minion-config:
             get_resource: config-salt-minion
           minion-roles: "elk"
+          floating-network-id:
+            get_param: floating-network-id
 
-  minion-elk-ip:
-    type: OS::Neutron::FloatingIP
-    properties:
-      floating_network_id: 
-        get_param: floating-network-id
-
-  minion-elk-port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: 
-        get_resource: net
-
-  
-  minion-elk-floating-ip-ass: 
-    type: OS::Neutron::FloatingIPAssociation
-    properties: 
-      floatingip_id:
-        get_resource: minion-elk-ip
-      port_id:
-        get_resource: minion-elk-port
 
   config-deploy:
     type: OS::Heat::SoftwareConfig
@@ -328,7 +311,7 @@ resources:
     depends_on:
       - deploy-salt-master
       - minion-group-elk
-      
+
 
 outputs:
   master-ip:
